@@ -1,0 +1,21 @@
+event manager applet bounce-interface
+ description "Bounce interface dynamically on down event"
+ event syslog pattern "changed state to down"
+ action 1.0 syslog msg "Interface is down. Bouncing interface..."
+ action 2.0 regexp "Interface ([^,]*), changed state to down" "$_syslog_msg" match intf
+ action 3.0 if $_regexp_result eq "1"
+ action 4.0   cli command "enable"
+ action 5.0   cli command "show run int $intf | include switchport access vlan 670"
+ action 6.0   regexp "switchport access vlan 670" "$_cli_result" 
+ action 7.0   if $_regexp_result eq "1"
+ action 8.0     cli command "configure terminal"
+ action 9.0     cli command "interface $intf"
+ action 9.1    cli command "shutdown"
+ action 9.2    wait 10
+ action 9.3    cli command "no shutdown"
+ action 9.4    cli command "end"
+ action 9.5    syslog msg "Bounced interface: $intf"
+ action 9.6 else
+ action 9.7    syslog msg "Interface $intf is not part of VLAN 670. No action taken."
+ action 9.8  end
+ action 9.9 end
